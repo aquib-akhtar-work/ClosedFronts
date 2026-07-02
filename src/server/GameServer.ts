@@ -606,6 +606,18 @@ export class GameServer {
           this.kickClient(client.clientID, KICK_REASON_INVALID_MESSAGE);
           return;
         }
+        const rawType = (json as { type?: string })?.type;
+        const rawIntentType = (json as { intent?: { type?: string } })?.intent
+          ?.type;
+        if (
+          rawType === "intent" &&
+          (rawIntentType === "update_game_config" ||
+            rawIntentType === "toggle_game_start_timer")
+        ) {
+          console.log(
+            `[TEAMDEBUG] onMessage entry: intent=${rawIntentType} bytes=${Buffer.byteLength(message, "utf8")}`,
+          );
+        }
         const parsed = ClientMessageSchema.safeParse(json);
         if (!parsed.success) {
           this.log.warn(`Failed to parse client message, kicking`, {

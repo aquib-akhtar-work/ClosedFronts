@@ -73,7 +73,8 @@ export class LobbyTeamView extends LitElement {
       changedProperties.has("clients") ||
       changedProperties.has("teamCount") ||
       changedProperties.has("nationCount") ||
-      changedProperties.has("isPublicGame")
+      changedProperties.has("isPublicGame") ||
+      changedProperties.has("clientTeams")
     ) {
       const teamsList = this.getTeamList();
       this.computeTeamPreview(teamsList);
@@ -403,10 +404,18 @@ export class LobbyTeamView extends LitElement {
           c.friends ?? [],
         ),
     );
+    // Mirror the real game's host-pin handling so the preview matches what
+    // will actually happen at game start: pinned clients go to their chosen
+    // team, unpinned ones auto-balance around them.
+    const hostPins = new Map<string, Team>();
+    for (const [clientID, team] of Object.entries(this.clientTeams)) {
+      if (team) hostPins.set(clientID, team);
+    }
     const assignment = assignTeamsLobbyPreview(
       players,
       teams,
       this.effectiveNationCount,
+      hostPins,
     );
     const buckets = new Map<Team, ClientInfo[]>();
     for (const t of teams) buckets.set(t, []);

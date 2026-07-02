@@ -160,12 +160,16 @@ export function assignTeamsLobbyPreview(
   players: PlayerInfo[],
   teams: Team[],
   nationCount: number,
+  // Host's per-client team pins. Pinned clients are placed on their chosen
+  // team in the preview, mirroring what the real game will do — so the host
+  // sees their picks take effect instead of an auto-balanced guess.
+  hostPins: Map<ClientID, Team> = new Map(),
 ): Map<PlayerInfo, Team | "kicked"> {
   const maxTeamSize = getMaxTeamSize(
     players.length + nationCount,
     teams.length,
   );
-  return assignTeams(players, teams, maxTeamSize);
+  return assignTeams(players, teams, maxTeamSize, hostPins);
 }
 
 export function getMaxTeamSize(numPlayers: number, numTeams: number): number {

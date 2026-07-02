@@ -9,6 +9,7 @@ import {
   PlayerInfo,
   PlayerType,
 } from "../src/core/game/Game";
+import { assignTeamsLobbyPreview } from "../src/core/game/TeamAssignment";
 import { playerInfo, setup } from "./util/Setup";
 
 let game: Game;
@@ -220,5 +221,31 @@ describe("Teams", () => {
     expect(game.player("client-A").isOnSameTeam(game.player("client-B"))).toBe(
       true,
     );
+  });
+
+  test("lobby preview honors host pins", () => {
+    // The host lobby preview must reflect the host's per-client team picks so
+    // the host sees the assignment the real game will produce, not an
+    // auto-balanced guess. Two humans pinned to Red must both preview on Red.
+    const humanA = new PlayerInfo(
+      "humanA",
+      PlayerType.Human,
+      "client-A",
+      "client-A",
+    );
+    const humanB = new PlayerInfo(
+      "humanB",
+      PlayerType.Human,
+      "client-B",
+      "client-B",
+    );
+    const teams = [ColoredTeams.Red, ColoredTeams.Blue];
+    const pins = new Map([
+      ["client-A", ColoredTeams.Red as string],
+      ["client-B", ColoredTeams.Red as string],
+    ]);
+    const result = assignTeamsLobbyPreview([humanA, humanB], teams, 0, pins);
+    expect(result.get(humanA)).toBe(ColoredTeams.Red);
+    expect(result.get(humanB)).toBe(ColoredTeams.Red);
   });
 });

@@ -660,6 +660,9 @@ export class Transport {
   }
 
   private onSendUpdateGameConfigIntent(event: SendUpdateGameConfigIntentEvent) {
+    console.log(
+      `[TEAMDEBUG] client sending update_game_config intent: isLocal=${this.isLocal} socketReadyState=${this.socket?.readyState} clientTeams=${JSON.stringify(event.config.clientTeams)}`,
+    );
     this.sendIntent({
       type: "update_game_config",
       config: event.config,

@@ -946,6 +946,9 @@ class Client {
 
   private handleUpdateGameConfig(event: CustomEvent) {
     const { config } = event.detail;
+    console.log(
+      `[TEAMDEBUG] client handleUpdateGameConfig: gameMode=${config.gameMode} clientTeams=${JSON.stringify(config.clientTeams)} hasEventBus=${!!this.eventBus}`,
+    );
 
     // Forward to eventBus if available
     if (this.eventBus) {

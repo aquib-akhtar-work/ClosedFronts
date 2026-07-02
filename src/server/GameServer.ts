@@ -283,6 +283,9 @@ export class GameServer {
         if (!this.activeClients.some((c) => c.clientID === clientID)) continue;
         this.clientTeams.set(clientID, team);
       }
+      console.log(
+        `[TEAMDEBUG] updateGameConfig stored: in=${JSON.stringify(gameConfig.clientTeams)} -> ${JSON.stringify(Array.from(this.clientTeams.entries()))} activeClientIDs=${JSON.stringify(this.activeClients.map((c) => c.clientID))}`,
+      );
     }
   }
 
@@ -341,6 +344,9 @@ export class GameServer {
       }
 
       case "update_game_config": {
+        console.log(
+          `[TEAMDEBUG] update_game_config intent: isLobbyCreator=${actor.isLobbyCreator} isPublic=${this.isPublic()} hasStarted=${this.hasStarted()} gameType=${stamped.config.gameType} clientTeams=${JSON.stringify(stamped.config.clientTeams)}`,
+        );
         if (!actor.isLobbyCreator && !actor.isAdminBot) {
           return {
             status: 403,
@@ -863,16 +869,8 @@ export class GameServer {
       this.log.error("Error parsing game start info", { message: error });
       return;
     }
-    // [TEAMDEBUG] Show whether host team-pins were stored and stamped onto the
-    // start info. If clientTeams is empty here, the host's update_game_config
-    // intent never landed (stale server, or rejected by the handleIntent guard).
-    const dbgPins = Array.from(this.clientTeams.entries());
-    const dbgStamped = result.data.players.map((p) => ({
-      clientID: p.clientID,
-      team: p.team,
-    }));
     console.log(
-      `[TEAMDEBUG] start(): clientTeams=${JSON.stringify(dbgPins)} stamped=${JSON.stringify(dbgStamped)}`,
+      `[TEAMDEBUG] start(): clientTeams=${JSON.stringify(Array.from(this.clientTeams.entries()))} stamped=${JSON.stringify(result.data.players.map((p) => ({ c: p.clientID, t: p.team })))}`,
     );
     this.gameStartInfo = result.data satisfies GameStartInfo;
     this.wireGameStartInfo = this.gameConfig.disableClanTags

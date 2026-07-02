@@ -2,7 +2,6 @@ import { Execution, Game, Player, Tick, Unit, UnitType } from "../game/Game";
 import { TileRef } from "../game/GameMap";
 import { CityExecution } from "./CityExecution";
 import { DefensePostExecution } from "./DefensePostExecution";
-import { EmbassyExecution } from "./EmbassyExecution";
 import { FactoryExecution } from "./FactoryExecution";
 import { MirvExecution } from "./MIRVExecution";
 import { MissileSiloExecution } from "./MissileSiloExecution";
@@ -128,9 +127,6 @@ export class ConstructionExecution implements Execution {
         break;
       case UnitType.Port:
         this.mg.addExecution(new PortExecution(this.structure!));
-        break;
-      case UnitType.Embassy:
-        this.mg.addExecution(new EmbassyExecution(this.structure!));
         break;
       case UnitType.SeasideTown:
         this.mg.addExecution(new SeasideTownExecution(this.structure!));

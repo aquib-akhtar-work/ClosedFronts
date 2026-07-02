@@ -863,6 +863,17 @@ export class GameServer {
       this.log.error("Error parsing game start info", { message: error });
       return;
     }
+    // [TEAMDEBUG] Show whether host team-pins were stored and stamped onto the
+    // start info. If clientTeams is empty here, the host's update_game_config
+    // intent never landed (stale server, or rejected by the handleIntent guard).
+    const dbgPins = Array.from(this.clientTeams.entries());
+    const dbgStamped = result.data.players.map((p) => ({
+      clientID: p.clientID,
+      team: p.team,
+    }));
+    console.log(
+      `[TEAMDEBUG] start(): clientTeams=${JSON.stringify(dbgPins)} stamped=${JSON.stringify(dbgStamped)}`,
+    );
     this.gameStartInfo = result.data satisfies GameStartInfo;
     this.wireGameStartInfo = this.gameConfig.disableClanTags
       ? {

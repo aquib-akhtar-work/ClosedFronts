@@ -230,6 +230,20 @@ export class GameImpl implements Game {
       undefined,
       this._hostTeams ?? new Map(),
     );
+    // [TEAMDEBUG] Show the pins the core received and the resulting assignment.
+    // If hostTeams is empty here but the server logged pins above, the team
+    // field was lost on the wire / in the worker build of hostTeams.
+    console.log(
+      `[TEAMDEBUG] addPlayers(): hostTeams=${JSON.stringify(
+        Array.from((this._hostTeams ?? new Map()).entries()),
+      )} playerTeams=${JSON.stringify(this.playerTeams)} assignment=${JSON.stringify(
+        Array.from(playerToTeam.entries()).map(([p, t]) => [
+          p.name,
+          p.clientID,
+          t,
+        ]),
+      )}`,
+    );
     for (const [playerInfo, team] of playerToTeam.entries()) {
       if (team === "kicked") {
         console.warn(`Player ${playerInfo.name} was kicked from team`);

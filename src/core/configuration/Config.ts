@@ -237,13 +237,6 @@ export class Config {
     return toInt(gold * this.goldMultiplierFor(player));
   }
 
-  embassyPassiveGold(level: number): Gold {
-    // Passive income an embassy pays to its owner (the builder), per interval.
-    return BigInt(10_000) * BigInt(level + 1);
-  }
-  embassyGoldInterval(): Tick {
-    return 10;
-  }
   seasideTownPopulationFactor(): number {
     // Seaside towns contribute this fraction of a city's max-population bonus.
     return 0.5;

@@ -1,4 +1,3 @@
-import { EmbassyExecution } from "../../../src/core/execution/EmbassyExecution";
 import { SpawnExecution } from "../../../src/core/execution/SpawnExecution";
 import {
   Game,
@@ -8,7 +7,6 @@ import {
   UnitType,
 } from "../../../src/core/game/Game";
 import { setup } from "../../util/Setup";
-import { executeTicks } from "../../util/utils";
 
 const gameID = "game_id";
 
@@ -69,34 +67,5 @@ describe("Embassy", () => {
     expect(builder.hasEmbassyIn(host)).toBe(true);
     // A second embassy in the host's territory must be refused.
     expect(builder.canBuild(UnitType.Embassy, hostTile)).toBeFalsy();
-  });
-
-  test("execution stays active while the embassy exists", () => {
-    const embassy = builder.buildUnit(UnitType.Embassy, hostTile, {});
-    const exec = new EmbassyExecution(embassy);
-    game.addExecution(exec);
-    executeTicks(game, 2);
-    expect(exec.isActive()).toBe(true);
-  });
-
-  test("passive gold is paid to the builder on the interval", () => {
-    const embassy = builder.buildUnit(UnitType.Embassy, hostTile, {});
-    const addGoldSpy = vi.spyOn(builder, "addGold");
-    const exec = new EmbassyExecution(embassy);
-    game.addExecution(exec);
-    // Advance past one payout interval.
-    executeTicks(game, game.config().embassyGoldInterval() + 2);
-    const expected = game.config().embassyPassiveGold(embassy.level());
-    expect(addGoldSpy).toHaveBeenCalledWith(expected, embassy.tile());
-  });
-
-  test("execution deactivates once the embassy is destroyed", () => {
-    const embassy = builder.buildUnit(UnitType.Embassy, hostTile, {});
-    const exec = new EmbassyExecution(embassy);
-    game.addExecution(exec);
-    executeTicks(game, 2);
-    embassy.delete(false);
-    executeTicks(game, 1);
-    expect(exec.isActive()).toBe(false);
   });
 });

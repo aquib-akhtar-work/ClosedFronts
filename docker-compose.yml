@@ -17,6 +17,8 @@ services:
     ports:
       - "${HOST_PORT:-8080}:80"
     environment:
+      # Required by the server at boot. Valid: dev | staging | prod.
+      GAME_ENV: ${GAME_ENV:-prod}
       DOMAIN: ${DOMAIN:-localhost}
       SUBDOMAIN: ${SUBDOMAIN:-main}
       NUM_WORKERS: ${NUM_WORKERS:-1}

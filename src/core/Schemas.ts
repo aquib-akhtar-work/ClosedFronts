@@ -166,6 +166,8 @@ const ClientInfoSchema = z.object({
   username: UsernameSchema,
   clanTag: ClanTagSchema,
   friends: z.array(z.string()).optional(),
+  // Host-assigned team for this client. Undefined means "auto-balance".
+  team: z.string().optional(),
 });
 
 export const GameInfoSchema = z.object({
@@ -225,6 +227,8 @@ export interface ClientInfo {
   username: string;
   clanTag: string | null;
   friends?: ClientID[];
+  // Team pinned by the host for this client. Undefined means "auto-balance".
+  team?: string;
 }
 export enum LogSeverity {
   Debug = "DEBUG",
@@ -306,6 +310,8 @@ export const GameConfigSchema = z.object({
   spawnImmunityDuration: z.number().int().min(0).nullable().optional(), // In ticks
   disabledUnits: z.enum(UnitType).array().optional(),
   playerTeams: TeamCountConfigSchema.optional(),
+  // Host's per-client team pins (clientID -> Team, or null for auto-balance).
+  clientTeams: z.record(z.string(), z.string().nullable()).optional(),
   goldMultiplier: z.number().min(0.1).max(1000).nullable().optional(),
   startingGold: z.number().int().min(0).max(1000000000).nullable().optional(),
   hostCheats: z
@@ -615,6 +621,8 @@ export const PlayerSchema = z.object({
   cosmetics: PlayerCosmeticsSchema.optional(),
   isLobbyCreator: z.boolean().optional(),
   friends: z.array(ID).optional(),
+  // Host-assigned team for this player. Undefined means "auto-balance".
+  team: z.string().optional(),
 });
 
 export const GameStartInfoSchema = z.object({

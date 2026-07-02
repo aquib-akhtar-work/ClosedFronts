@@ -13,6 +13,7 @@ import {
   GameMapSize,
   GameMapType,
   GameMode,
+  Team,
   UnitType,
 } from "../core/game/Game";
 import { UserSettings } from "../core/game/UserSettings";
@@ -87,6 +88,8 @@ export class HostLobbyModal extends BaseModal {
   @state() private lobbyId = "";
   @state() private lobbyUrlSuffix = "";
   @state() private clients: ClientInfo[] = [];
+  // Host's per-client team picks. Keyed by clientID. `null` = auto-balance.
+  @state() private clientTeams: Record<string, Team | null> = {};
   @state() private useRandomMap: boolean = false;
   @state() private disabledUnits: UnitType[] = [];
   @state() private hostCheatsEnabled: boolean = false;
@@ -121,6 +124,18 @@ export class HostLobbyModal extends BaseModal {
     this.lobbyCreatorClientID = lobby.lobbyCreatorClientID ?? "";
     if (lobby.clients) {
       this.clients = lobby.clients;
+      // Seed the local team-pin map from the server so the host's picks
+      // survive a reload. Don't overwrite a local "Auto" (null) pick; let
+      // the host re-send those if they want.
+      const next: Record<string, Team | null> = { ...this.clientTeams };
+      for (const c of lobby.clients) {
+        if (c.team) {
+          next[c.clientID] = c.team;
+        } else if (!(c.clientID in next)) {
+          next[c.clientID] = null;
+        }
+      }
+      this.clientTeams = next;
     }
   };
 
@@ -471,9 +486,12 @@ export class HostLobbyModal extends BaseModal {
             .currentClientID=${this.lobbyCreatorClientID}
             .teamCount=${this.teamCount}
             .nationCount=${this.nations}
+            .clientTeams=${this.clientTeams}
             .onKickPlayer=${(clientID: string) => this.kickPlayer(clientID)}
             .onToggleNameReveal=${(clientID: string) =>
               this.toggleNameReveal(clientID)}
+            .onPlayerTeamChange=${(clientID: string, team: Team | null) =>
+              this.handlePlayerTeamChange(clientID, team)}
             .nameReveals=${this.nameReveals}
             .anonymizeNames=${this.anonymizeNames}
           ></lobby-player-view>
@@ -1047,6 +1065,12 @@ export class HostLobbyModal extends BaseModal {
     return ids.length > 0 ? ids : undefined;
   }
 
+  // Host pinned a player to a team. `null` clears the pin (auto-balance).
+  private handlePlayerTeamChange = (clientID: string, team: Team | null) => {
+    this.clientTeams = { ...this.clientTeams, [clientID]: team };
+    this.putGameConfig();
+  };
+
   private async putGameConfig() {
     const spawnImmunityTicks = this.spawnImmunityDurationMinutes
       ? this.spawnImmunityDurationMinutes * 60 * 10
@@ -1075,6 +1099,7 @@ export class HostLobbyModal extends BaseModal {
               ? spawnImmunityTicks
               : null,
             playerTeams: this.teamCount,
+            clientTeams: this.clientTeams,
             nations: sliderToNationsConfig(
               this.nations,
               this.defaultNationCount,

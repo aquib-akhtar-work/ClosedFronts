@@ -59,6 +59,7 @@ export function createGame(
   miniGameMap: GameMap,
   config: Config,
   teamGameSpawnAreas?: TeamGameSpawnAreas,
+  hostTeams?: Map<ClientID, Team>,
 ): Game {
   const stats = new StatsImpl();
   return new GameImpl(
@@ -69,6 +70,7 @@ export function createGame(
     config,
     stats,
     teamGameSpawnAreas,
+    hostTeams,
   );
 }
 
@@ -125,6 +127,7 @@ export class GameImpl implements Game {
     private _config: Config,
     private _stats: Stats,
     teamGameSpawnAreas?: TeamGameSpawnAreas,
+    private _hostTeams?: Map<ClientID, Team>,
   ) {
     const constructorStart = performance.now();
 
@@ -177,16 +180,25 @@ export class GameImpl implements Game {
     }
     if (numPlayerTeams < 2) {
       throw new Error(`Too few teams: ${numPlayerTeams}`);
-    } else if (numPlayerTeams < 8) {
-      this.playerTeams = [ColoredTeams.Red, ColoredTeams.Blue];
-      if (numPlayerTeams >= 3) this.playerTeams.push(ColoredTeams.Yellow);
-      if (numPlayerTeams >= 4) this.playerTeams.push(ColoredTeams.Green);
-      if (numPlayerTeams >= 5) this.playerTeams.push(ColoredTeams.Purple);
-      if (numPlayerTeams >= 6) this.playerTeams.push(ColoredTeams.Orange);
-      if (numPlayerTeams >= 7) this.playerTeams.push(ColoredTeams.Teal);
+    }
+    // Always lead with the 7 named colors so the host's per-player team
+    // picker in the lobby (which only offers those colors) is honored
+    // even when the chosen team count exceeds 7. Beyond 7 we fall back
+    // to "Team N" names for the leaderboard.
+    const colorList = [
+      ColoredTeams.Red,
+      ColoredTeams.Blue,
+      ColoredTeams.Yellow,
+      ColoredTeams.Green,
+      ColoredTeams.Purple,
+      ColoredTeams.Orange,
+      ColoredTeams.Teal,
+    ];
+    if (numPlayerTeams <= colorList.length) {
+      this.playerTeams = colorList.slice(0, numPlayerTeams);
     } else {
-      this.playerTeams = [];
-      for (let i = 1; i <= numPlayerTeams; i++) {
+      this.playerTeams = [...colorList];
+      for (let i = colorList.length + 1; i <= numPlayerTeams; i++) {
         this.playerTeams.push(`Team ${i}`);
       }
     }
@@ -212,7 +224,12 @@ export class GameImpl implements Game {
       ...this._humans,
       ...this._nations.map((n) => n.playerInfo),
     ];
-    const playerToTeam = assignTeams(allPlayers, this.playerTeams);
+    const playerToTeam = assignTeams(
+      allPlayers,
+      this.playerTeams,
+      undefined,
+      this._hostTeams ?? new Map(),
+    );
     for (const [playerInfo, team] of playerToTeam.entries()) {
       if (team === "kicked") {
         console.warn(`Player ${playerInfo.name} was kicked from team`);

@@ -7,8 +7,10 @@ import {
   GameMapType,
   GameMode,
   GameType,
+  Nation,
   PlayerInfo,
   PlayerType,
+  Team,
 } from "../../src/core/game/Game";
 import { createGame } from "../../src/core/game/GameImpl";
 import {
@@ -16,7 +18,7 @@ import {
   MapManifest,
 } from "../../src/core/game/TerrainMapLoader";
 import { UserSettings } from "../../src/core/game/UserSettings";
-import { GameConfig } from "../../src/core/Schemas";
+import { ClientID, GameConfig } from "../../src/core/Schemas";
 import { TestConfig } from "./TestConfig";
 
 export async function setup(
@@ -26,6 +28,8 @@ export async function setup(
   currentDir: string = __dirname,
   ConfigClass: typeof TestConfig = TestConfig,
   autoEndSpawnPhase: boolean = true,
+  hostTeams: Map<ClientID, Team> = new Map(),
+  nations: Nation[] = [],
 ): Promise<Game> {
   // Suppress console.debug for tests.
   console.debug = () => {};
@@ -71,7 +75,15 @@ export async function setup(
   };
   const config = new ConfigClass(gameConfig, new UserSettings(), false);
 
-  const game = createGame(humans, [], gameMap, miniGameMap, config);
+  const game = createGame(
+    humans,
+    nations,
+    gameMap,
+    miniGameMap,
+    config,
+    undefined,
+    hostTeams,
+  );
   if (autoEndSpawnPhase) game.endSpawnPhase();
   return game;
 }

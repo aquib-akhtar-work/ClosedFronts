@@ -346,6 +346,28 @@ label.option-card:hover {
   appearance: none;
 }
 
+.player-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-team-select {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.player-team-select option {
+  background: #23272e;
+  color: #fff;
+}
+
 /* Firefox */
 #bots-count::-moz-range-track,
 #private-lobby-bots-count::-moz-range-track {

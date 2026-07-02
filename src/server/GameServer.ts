@@ -4,7 +4,7 @@ import WebSocket from "ws";
 import { z } from "zod";
 import { isAdminRole } from "../core/ApiSchemas";
 import { GameEnv } from "../core/configuration/Config";
-import { GameType } from "../core/game/Game";
+import { GameType, Team } from "../core/game/Game";
 import {
   ClientID,
   ClientMessageSchema,
@@ -110,6 +110,9 @@ export class GameServer {
   private outOfSyncClients: Set<ClientID> = new Set();
 
   private isPaused = false;
+  // Host's per-client team pins. Key is clientID; value is the team name.
+  // Players not in the map are auto-balanced at game start.
+  private clientTeams: Map<ClientID, Team> = new Map();
 
   private websockets: Set<WebSocket> = new Set();
 
@@ -183,7 +186,11 @@ export class GameServer {
     );
   }
 
-  public updateGameConfig(gameConfig: Partial<GameConfig>): void {
+  public updateGameConfig(
+    gameConfig: Partial<GameConfig> & {
+      clientTeams?: Record<ClientID, Team | null>;
+    },
+  ): void {
     if (gameConfig.gameMap !== undefined) {
       this.gameConfig.gameMap = gameConfig.gameMap;
     }
@@ -265,6 +272,18 @@ export class GameServer {
     // (the full config it sends has hostCheats: undefined when the toggle is
     // off), so `undefined` here means "clear", not "leave unchanged".
     this.gameConfig.hostCheats = gameConfig.hostCheats;
+
+    if (gameConfig.clientTeams !== undefined) {
+      // Reset the map and re-apply only the keys the host sent, dropping any
+      // entries for clients that have since left. Keys with a null value
+      // clear the pin.
+      this.clientTeams.clear();
+      for (const [clientID, team] of Object.entries(gameConfig.clientTeams)) {
+        if (team === null) continue;
+        if (!this.activeClients.some((c) => c.clientID === clientID)) continue;
+        this.clientTeams.set(clientID, team);
+      }
+    }
   }
 
   // Dispatch a control/gameplay intent from either a websocket client or the
@@ -836,6 +855,7 @@ export class GameServer {
         cosmetics: c.cosmetics,
         isLobbyCreator: this.lobbyCreatorID === c.clientID,
         friends: friendsFor(c),
+        team: this.clientTeams.get(c.clientID),
       })),
     });
     if (!result.success) {
@@ -1076,11 +1096,13 @@ export class GameServer {
               clanTag: hideClanTags ? null : (c.clanTag ?? null),
               clientID: c.clientID,
               friends: friendsFor(c),
+              team: this.clientTeams.get(c.clientID),
             }
           : {
               username: this.anonName(viewer, c.clientID),
               clanTag: null,
               clientID: c.clientID,
+              team: this.clientTeams.get(c.clientID),
             },
       ),
       lobbyCreatorClientID: this.lobbyCreatorID,

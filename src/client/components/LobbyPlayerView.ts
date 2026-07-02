@@ -39,6 +39,13 @@ export class LobbyTeamView extends LitElement {
   @property({ type: Boolean }) anonymizeNames: boolean = false;
   @property({ type: Number }) nationCount: number = 0;
   @property({ type: Boolean }) isPublicGame: boolean = false;
+  // Host's per-client team pins (clientID -> Team, or null for auto-balance).
+  @property({ type: Object }) clientTeams: Record<string, Team | null> = {};
+  // Called when the host picks/clears a player's team.
+  @property({ type: Function }) onPlayerTeamChange?: (
+    clientID: string,
+    team: Team | null,
+  ) => void;
 
   private get theme(): Theme {
     return themeProvider.current();
@@ -107,6 +114,36 @@ export class LobbyTeamView extends LitElement {
     return this;
   }
 
+  // Per-player team dropdown for the host. Only rendered when the host has
+  // wired up an onPlayerTeamChange handler (i.e. in the host lobby).
+  private renderPlayerTeamSelect(client: ClientInfo) {
+    if (!this.onPlayerTeamChange) return html``;
+    const teams = this.getTeamList();
+    const current = this.clientTeams[client.clientID] ?? "";
+    return html`
+      <select
+        class="player-team-select text-xs bg-gray-900/80 text-white border border-white/10 rounded px-1 py-0.5"
+        .value=${current}
+        @change=${(e: Event) => {
+          const value = (e.target as HTMLSelectElement).value;
+          this.onPlayerTeamChange!(
+            client.clientID,
+            value === "" ? null : (value as Team),
+          );
+        }}
+      >
+        <option value="">${translateText("host_modal.team_auto")}</option>
+        ${teams.map(
+          (team) => html`
+            <option value=${team} ?selected=${current === team}>
+              ${getTranslatedPlayerTeamLabel(team)}
+            </option>
+          `,
+        )}
+      </select>
+    `;
+  }
+
   private renderTeamMode() {
     const active = this.teamPreview.filter(
       (t) => t.players.length > 0 || t.team === ColoredTeams.Nations,
@@ -129,12 +166,13 @@ export class LobbyTeamView extends LitElement {
           (client) => {
             const displayName = this.getClientDisplayName(client);
             return html`<div
-              class="px-2 py-1 rounded-sm mb-1 text-xs text-white border
+              class="px-2 py-1 rounded-sm mb-1 text-xs text-white border flex items-center gap-2
                 ${this.isCurrentPlayer(client)
                 ? "bg-malibu-blue/20 border-sky-500/40"
                 : "bg-gray-700/70 border-transparent"}"
             >
-              ${displayName}
+              <span class="flex-1 truncate">${displayName}</span>
+              ${this.renderPlayerTeamSelect(client)}
             </div>`;
           },
         )}

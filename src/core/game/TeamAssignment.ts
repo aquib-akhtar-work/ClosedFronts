@@ -7,16 +7,38 @@ export function assignTeams(
   players: PlayerInfo[],
   teams: Team[],
   maxTeamSize: number = getMaxTeamSize(players.length, teams.length),
+  // Host-pinned teams: a clientID -> Team map. Pinned players are placed on
+  // their chosen team before the clan/friend logic runs, overriding any clan
+  // grouping. A pin pointing at a team no longer in `teams` (e.g. the host
+  // lowered the team count after pinning) is dropped and the player falls
+  // through to normal assignment.
+  hostPins: Map<ClientID, Team> = new Map(),
 ): Map<PlayerInfo, Team | "kicked"> {
   const result = new Map<PlayerInfo, Team | "kicked">();
   const teamPlayerCount = new Map<Team, number>();
 
+  // Apply host-pinned team assignments first. These override clan-tag logic
+  // and skip the round-robin / friend placement below.
+  const validTeams = new Set(teams);
+  const unpinned: PlayerInfo[] = [];
+  for (const player of players) {
+    const pin =
+      player.clientID !== null ? hostPins.get(player.clientID) : undefined;
+    if (pin !== undefined && validTeams.has(pin)) {
+      result.set(player, pin);
+      teamPlayerCount.set(pin, (teamPlayerCount.get(pin) ?? 0) + 1);
+    } else {
+      unpinned.push(player);
+    }
+  }
+
   // Clans are strict: a clan goes to one team together, and any overflow
   // members get kicked. (You opted into the clan, so we honor "all or
-  // nothing" for placement.)
+  // nothing" for placement.) Pinned members are excluded from their clan
+  // group — the host's pin overrides the clan.
   const clanGroups = new Map<string, PlayerInfo[]>();
   const nonClanPlayers: PlayerInfo[] = [];
-  for (const p of players) {
+  for (const p of unpinned) {
     if (p.clanTag) {
       if (!clanGroups.has(p.clanTag)) clanGroups.set(p.clanTag, []);
       clanGroups.get(p.clanTag)!.push(p);
@@ -53,7 +75,8 @@ export function assignTeams(
   // team where the most of their friends already are. If that team is full
   // we spill onto the next-emptiest non-full team rather than kicking — you
   // didn't opt into being grouped with friend-of-friend, so a chain that
-  // doesn't fit shouldn't bench anyone.
+  // doesn't fit shouldn't bench anyone. Pinned players count as friends'
+  // teammates here, so a friend of a pinned player is drawn to their team.
   const presentClientIDs = new Set<ClientID>();
   for (const p of players) {
     if (p.clientID !== null) presentClientIDs.add(p.clientID);

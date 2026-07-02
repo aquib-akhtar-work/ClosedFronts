@@ -19,6 +19,7 @@ import {
   PlayerInfo,
   PlayerProfile,
   PlayerType,
+  Team,
   UnitType,
 } from "./game/Game";
 import { createGame } from "./game/GameImpl";
@@ -57,6 +58,15 @@ export async function createGameRunner(
     );
   });
 
+  // Build the host's per-client team pin map from the start info. Players
+  // without a `team` field are auto-balanced by GameImpl/TeamAssignment.
+  const hostTeams = new Map<ClientID, Team>();
+  for (const p of gameStart.players) {
+    if (p.team) {
+      hostTeams.set(p.clientID, p.team);
+    }
+  }
+
   const nations = createNationsForGame(
     gameStart,
     gameMap.nations,
@@ -72,6 +82,7 @@ export async function createGameRunner(
     gameMap.miniGameMap,
     config,
     gameMap.teamGameSpawnAreas,
+    hostTeams,
   );
 
   const gr = new GameRunner(

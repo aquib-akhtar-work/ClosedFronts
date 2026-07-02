@@ -1,4 +1,4 @@
-import { LitElement, html } from "lit";
+import { html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
@@ -10,6 +10,7 @@ import {
   PlayerType,
   Quads,
   Team,
+  teamNamesForCount,
   Trios,
 } from "../../core/game/Game";
 import { assignTeamsLobbyPreview } from "../../core/game/TeamAssignment";
@@ -351,20 +352,13 @@ export class LobbyTeamView extends LitElement {
       numTeams = Math.max(2, Math.ceil(playerCount / divisor));
     }
 
-    if (numTeams < 8) {
-      const ordered: Team[] = [
-        ColoredTeams.Red,
-        ColoredTeams.Blue,
-        ColoredTeams.Yellow,
-        ColoredTeams.Green,
-        ColoredTeams.Purple,
-        ColoredTeams.Orange,
-        ColoredTeams.Teal,
-      ];
-      return ordered.slice(0, numTeams);
-    }
-
-    return Array.from({ length: numTeams }, (_, i) => `Team ${i + 1}`);
+    // Use the shared team-name generator so the picker's option values match
+    // the real game's team list exactly — a host's pin is validated against
+    // the game's teams in assignTeams, so a naming mismatch silently drops the
+    // pin and the player is auto-balanced onto the wrong team (the lobby
+    // preview would still look correct, since it validates against this same
+    // list — masking the bug).
+    return teamNamesForCount(numTeams);
   }
 
   private teamHeaderColor(team: Team): string {

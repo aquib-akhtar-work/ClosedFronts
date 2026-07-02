@@ -93,6 +93,37 @@ export const ColoredTeams: Record<string, Team> = {
   Nations: "Nations",
 } as const;
 
+// Fixed display order of the named team colors. The first 7 team slots always
+// use these, in this order — note it differs from `Object.keys(ColoredTeams)`.
+export const TEAM_COLOR_ORDER: Team[] = [
+  ColoredTeams.Red,
+  ColoredTeams.Blue,
+  ColoredTeams.Yellow,
+  ColoredTeams.Green,
+  ColoredTeams.Purple,
+  ColoredTeams.Orange,
+  ColoredTeams.Teal,
+];
+
+// The single source of truth for team names given a team count: the first 7
+// slots are the named colors (in `TEAM_COLOR_ORDER`), and beyond that
+// "Team 8", "Team 9", ... Shared by `GameImpl.populateTeams` (the real game)
+// and the lobby's team picker, so a host's per-client pin value is validated
+// against the same team list in both places. Diverging these two caused pins
+// to be silently dropped (the lobby preview still looked right because it
+// validated against its own list) and players were auto-balanced onto the
+// wrong teams.
+export function teamNamesForCount(numTeams: number): Team[] {
+  if (numTeams <= TEAM_COLOR_ORDER.length) {
+    return TEAM_COLOR_ORDER.slice(0, numTeams);
+  }
+  const list = [...TEAM_COLOR_ORDER];
+  for (let i = TEAM_COLOR_ORDER.length + 1; i <= numTeams; i++) {
+    list.push(`Team ${i}`);
+  }
+  return list;
+}
+
 // GameMapType and the maps list are generated from
 // map-generator/assets/maps/<map>/info.json by the map-generator
 // (`npm run gen-maps`).

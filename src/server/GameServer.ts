@@ -283,9 +283,6 @@ export class GameServer {
         if (!this.activeClients.some((c) => c.clientID === clientID)) continue;
         this.clientTeams.set(clientID, team);
       }
-      console.log(
-        `[TEAMDEBUG] updateGameConfig stored: in=${JSON.stringify(gameConfig.clientTeams)} -> ${JSON.stringify(Array.from(this.clientTeams.entries()))} activeClientIDs=${JSON.stringify(this.activeClients.map((c) => c.clientID))}`,
-      );
     }
   }
 
@@ -344,9 +341,6 @@ export class GameServer {
       }
 
       case "update_game_config": {
-        console.log(
-          `[TEAMDEBUG] update_game_config intent: isLobbyCreator=${actor.isLobbyCreator} isPublic=${this.isPublic()} hasStarted=${this.hasStarted()} gameType=${stamped.config.gameType} clientTeams=${JSON.stringify(stamped.config.clientTeams)}`,
-        );
         if (!actor.isLobbyCreator && !actor.isAdminBot) {
           return {
             status: 403,
@@ -605,18 +599,6 @@ export class GameServer {
           });
           this.kickClient(client.clientID, KICK_REASON_INVALID_MESSAGE);
           return;
-        }
-        const rawType = (json as { type?: string })?.type;
-        const rawIntentType = (json as { intent?: { type?: string } })?.intent
-          ?.type;
-        if (
-          rawType === "intent" &&
-          (rawIntentType === "update_game_config" ||
-            rawIntentType === "toggle_game_start_timer")
-        ) {
-          console.log(
-            `[TEAMDEBUG] onMessage entry: intent=${rawIntentType} bytes=${Buffer.byteLength(message, "utf8")}`,
-          );
         }
         const parsed = ClientMessageSchema.safeParse(json);
         if (!parsed.success) {
@@ -881,9 +863,6 @@ export class GameServer {
       this.log.error("Error parsing game start info", { message: error });
       return;
     }
-    console.log(
-      `[TEAMDEBUG] start(): clientTeams=${JSON.stringify(Array.from(this.clientTeams.entries()))} stamped=${JSON.stringify(result.data.players.map((p) => ({ c: p.clientID, t: p.team })))}`,
-    );
     this.gameStartInfo = result.data satisfies GameStartInfo;
     this.wireGameStartInfo = this.gameConfig.disableClanTags
       ? {

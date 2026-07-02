@@ -8,6 +8,7 @@ import {
   Nation,
   PlayerInfo,
   PlayerType,
+  teamNamesForCount,
 } from "../src/core/game/Game";
 import { assignTeamsLobbyPreview } from "../src/core/game/TeamAssignment";
 import { playerInfo, setup } from "./util/Setup";
@@ -247,5 +248,102 @@ describe("Teams", () => {
     const result = assignTeamsLobbyPreview([humanA, humanB], teams, 0, pins);
     expect(result.get(humanA)).toBe(ColoredTeams.Red);
     expect(result.get(humanB)).toBe(ColoredTeams.Red);
+  });
+
+  test("teamNamesForCount never emits Team 1..7 (the picker/game naming drift)", () => {
+    // Regression: the lobby picker used to generate ["Team 1", "Team 2", ...]
+    // for >7 teams while the game generated [Red, Blue, ..., Teal, "Team 8", ...].
+    // A host pinning to "Team 1" was silently dropped. The shared
+    // teamNamesForCount must always lead with the 7 named colors and only use
+    // "Team N" for N >= 8 — so "Team 1".."Team 7" can never appear.
+    expect(teamNamesForCount(2)).toEqual([ColoredTeams.Red, ColoredTeams.Blue]);
+    expect(teamNamesForCount(7)).toEqual([
+      ColoredTeams.Red,
+      ColoredTeams.Blue,
+      ColoredTeams.Yellow,
+      ColoredTeams.Green,
+      ColoredTeams.Purple,
+      ColoredTeams.Orange,
+      ColoredTeams.Teal,
+    ]);
+    const thirteen = teamNamesForCount(13);
+    expect(thirteen.slice(0, 7)).toEqual([
+      ColoredTeams.Red,
+      ColoredTeams.Blue,
+      ColoredTeams.Yellow,
+      ColoredTeams.Green,
+      ColoredTeams.Purple,
+      ColoredTeams.Orange,
+      ColoredTeams.Teal,
+    ]);
+    expect(thirteen.slice(7)).toEqual([
+      "Team 8",
+      "Team 9",
+      "Team 10",
+      "Team 11",
+      "Team 12",
+      "Team 13",
+    ]);
+    // The old buggy names must never be produced.
+    for (const name of teamNamesForCount(13)) {
+      expect(name).not.toMatch(/^Team [1-7]$/);
+    }
+  });
+
+  test("lobby picker's first option is a valid game team for >7 Duos", async () => {
+    // End-to-end regression for the user-reported bug: with 2 humans + 24
+    // nations under Duos (13 teams), the host pins both humans to the FIRST
+    // option the lobby picker offers. The picker and the game now share
+    // teamNamesForCount, so that option (Red) must be a real game team and the
+    // pin must be honored — both humans on the same team, not auto-balanced
+    // onto Red/Blue.
+    const humanA = new PlayerInfo(
+      "humanA",
+      PlayerType.Human,
+      "client-A",
+      "client-A",
+    );
+    const humanB = new PlayerInfo(
+      "humanB",
+      PlayerType.Human,
+      "client-B",
+      "client-B",
+    );
+    const nations: Nation[] = [];
+    for (let i = 0; i < 24; i++) {
+      nations.push(
+        new Nation(
+          new Cell(i, 0),
+          new PlayerInfo(`nation${i}`, PlayerType.Nation, null, `nation-${i}`),
+        ),
+      );
+    }
+    const numTeams = Math.ceil((2 + 24) / 2); // 13
+    const pickerOptions = teamNamesForCount(numTeams);
+    const firstOption = pickerOptions[0]; // Red
+
+    game = await setup(
+      "plains",
+      { gameMode: GameMode.Team, playerTeams: Duos },
+      [humanA, humanB],
+      path.join(__dirname, "util"),
+      undefined,
+      undefined,
+      new Map([
+        ["client-A", firstOption],
+        ["client-B", firstOption],
+      ]),
+      nations,
+    );
+
+    // The game's player teams must exactly match the picker's option list, so
+    // every pin value the picker can produce is a valid game team.
+    expect(game.teams().slice(1)).toEqual(pickerOptions);
+    // The host's pin to the picker's first option is honored.
+    expect(game.player("client-A").team()).toBe(firstOption);
+    expect(game.player("client-B").team()).toBe(firstOption);
+    expect(game.player("client-A").isOnSameTeam(game.player("client-B"))).toBe(
+      true,
+    );
   });
 });

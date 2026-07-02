@@ -1,4 +1,5 @@
 import { PortExecution } from "../../../src/core/execution/PortExecution";
+import { SeasideTownExecution } from "../../../src/core/execution/SeasideTownExecution";
 import { SpawnExecution } from "../../../src/core/execution/SpawnExecution";
 import {
   Game,
@@ -119,5 +120,79 @@ describe("SeasideTown (trade integration)", () => {
     exec.init(game, 0);
     const ports = exec.tradingPorts();
     expect(ports).toContain(townB);
+  });
+
+  test("spawns trade ships like a port when a trade partner is reachable", () => {
+    // Build a Seaside Town for A and a Port for B on the same water body, then
+    // drive the simulation. A's Seaside Town must spawn TradeShip units
+    // (SeasideTownExecution mirrors PortExecution's spawn loop).
+    const aShore = findShoreTileOnWater(game, playerA, null);
+    expect(aShore).not.toBeNull();
+    let comp: number | null = null;
+    for (const n of game.neighbors(aShore!)) {
+      if (game.isWater(n)) {
+        comp = game.getWaterComponent(n);
+        if (comp !== null) break;
+      }
+    }
+    expect(comp).not.toBeNull();
+    const bShore = findShoreTileOnWater(game, playerB, comp);
+    expect(bShore).not.toBeNull();
+
+    const townA = playerA.buildUnit(UnitType.SeasideTown, aShore!, {});
+    playerB.buildUnit(UnitType.Port, bShore!, {});
+
+    // Trade-ship spawning lives in the structure's Execution, which
+    // ConstructionExecution registers in a real game. buildUnit() alone only
+    // creates the unit, so add the execution explicitly here to drive spawns.
+    game.addExecution(new SeasideTownExecution(townA));
+    game.addExecution(new PortExecution(playerB.units(UnitType.Port)[0]));
+
+    // Trade ships spawn probabilistically every 10 ticks; the rejection-backed
+    // spawn rate climbs until one fires. Run enough ticks that at least one
+    // TradeShip is created and in flight.
+    let sawTradeShip = false;
+    for (let i = 0; i < 1500; i++) {
+      game.executeNextTick();
+      if (game.unitCount(UnitType.TradeShip) > 0) {
+        sawTradeShip = true;
+        break;
+      }
+    }
+    expect(sawTradeShip).toBe(true);
+  });
+
+  test("CONTROL: a Port in the same setup spawns trade ships", () => {
+    // Isolates whether the test harness itself drives trade-ship spawning. If
+    // this passes and the Seaside Town test above fails, the bug is Seaside
+    // Town-specific. If both fail, the harness isn't running port executions.
+    const aShore = findShoreTileOnWater(game, playerA, null);
+    expect(aShore).not.toBeNull();
+    let comp: number | null = null;
+    for (const n of game.neighbors(aShore!)) {
+      if (game.isWater(n)) {
+        comp = game.getWaterComponent(n);
+        if (comp !== null) break;
+      }
+    }
+    expect(comp).not.toBeNull();
+    const bShore = findShoreTileOnWater(game, playerB, comp);
+    expect(bShore).not.toBeNull();
+
+    const portA = playerA.buildUnit(UnitType.Port, aShore!, {});
+    const portB = playerB.buildUnit(UnitType.Port, bShore!, {});
+
+    game.addExecution(new PortExecution(portA));
+    game.addExecution(new PortExecution(portB));
+
+    let sawTradeShip = false;
+    for (let i = 0; i < 1500; i++) {
+      game.executeNextTick();
+      if (game.unitCount(UnitType.TradeShip) > 0) {
+        sawTradeShip = true;
+        break;
+      }
+    }
+    expect(sawTradeShip).toBe(true);
   });
 });

@@ -1562,6 +1562,13 @@ export class PlayerImpl implements Player {
       if (!this.canTrade(owner)) {
         continue;
       }
+      // One embassy per foreign nation: a player may build at most one Embassy
+      // in any given host's territory. To grow the bonus they upgrade the
+      // existing embassy instead of stacking a second one. Skip every tile
+      // owned by a nation the builder already has an embassy in.
+      if (this.hasEmbassyIn(owner)) {
+        continue;
+      }
       let tooClose = false;
       for (const { unit } of nearbyUnits) {
         if (this.mg.euclideanDistSquared(unit.tile(), t) < minDistSquared) {

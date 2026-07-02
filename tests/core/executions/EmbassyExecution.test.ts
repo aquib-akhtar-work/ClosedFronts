@@ -60,6 +60,17 @@ describe("Embassy", () => {
     expect(host.hasEmbassyIn(builder)).toBe(false);
   });
 
+  test("a builder may place only one embassy per foreign nation", () => {
+    // One embassy per host territory: after the builder places an embassy in
+    // the host's land, canBuild must reject a second embassy anywhere in that
+    // same nation's territory (the player upgrades the existing one instead).
+    const first = builder.buildUnit(UnitType.Embassy, hostTile, {});
+    expect(first).toBeDefined();
+    expect(builder.hasEmbassyIn(host)).toBe(true);
+    // A second embassy in the host's territory must be refused.
+    expect(builder.canBuild(UnitType.Embassy, hostTile)).toBeFalsy();
+  });
+
   test("execution stays active while the embassy exists", () => {
     const embassy = builder.buildUnit(UnitType.Embassy, hostTile, {});
     const exec = new EmbassyExecution(embassy);

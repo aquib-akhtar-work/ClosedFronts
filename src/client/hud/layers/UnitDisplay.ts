@@ -151,6 +151,13 @@ export class UnitDisplay extends LitElement implements Controller {
             this.keybinds["buildPort"]?.key ?? "3",
           )}
           ${this.renderUnitItem(
+            seasideTownIcon,
+            this._seasideTown,
+            UnitType.SeasideTown,
+            "seaside_town",
+            this.keybinds["buildSeasideTown"]?.key ?? "Shift+Digit2",
+          )}
+          ${this.renderUnitItem(
             defensePostIcon,
             this._defensePost,
             UnitType.DefensePost,
@@ -205,13 +212,6 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.Embassy,
             "embassy",
             this.keybinds["buildEmbassy"]?.key ?? "Shift+Digit1",
-          )}
-          ${this.renderUnitItem(
-            seasideTownIcon,
-            this._seasideTown,
-            UnitType.SeasideTown,
-            "seaside_town",
-            this.keybinds["buildSeasideTown"]?.key ?? "Shift+Digit2",
           )}
         </div>
       </div>

@@ -31,12 +31,13 @@ class TradeStationStopHandler implements TrainStopHandler {
     if (trainOwner !== stationOwner) {
       stationOwner.addGold(gold, station.tile());
       mg.stats().trainExternalTrade(stationOwner, gold);
-      // Embassy trade bonus: the station owner is the "host" nation. If the
-      // train's owner built an embassy in the host's territory, the host earns
-      // +100% on this stop (the same gold bonus is paid again). An embassy can
-      // never be built on own land, so this is a no-op when owners match.
+      // Embassy trade bonus: the builder earns +100% on their own trade with
+      // the nation they placed an Embassy in. If the train's owner built an
+      // embassy in the station owner's territory, the train owner (the builder)
+      // earns the bonus gold again on this stop. An embassy can never be built
+      // on own land, so this is a no-op when owners match.
       if (trainOwner.hasEmbassyIn(stationOwner)) {
-        stationOwner.addGold(gold, station.tile());
+        trainOwner.addGold(gold, station.tile());
       }
     }
     trainOwner.addGold(gold, station.tile());

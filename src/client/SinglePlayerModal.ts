@@ -646,8 +646,6 @@ export class SinglePlayerModal extends BaseModal {
       "username-input",
     ) as UsernameInput;
 
-    await crazyGamesSDK.requestMidgameAd();
-
     this.dispatchEvent(
       new CustomEvent("join-lobby", {
         detail: {

@@ -26,11 +26,6 @@
         padding-left: env(safe-area-inset-left);
       }
 
-      /* Prevent Playwire bottom rail from affecting flex layout */
-      [id^="pw-oop-bottom_rail"] {
-        position: fixed !important;
-      }
-
       /* Ensure full viewport height on iOS */
       html,
       body {
@@ -84,12 +79,6 @@
       );
     </script>
 
-    <!-- CrazyGames SDK -->
-    <script
-      src="https://sdk.crazygames.com/crazygames-sdk-v3.js"
-      async
-    ></script>
-
     <!-- Cloudflare Turnstile -->
     <script
       src="https://challenges.cloudflare.com/turnstile/v0/api.js"
@@ -97,34 +86,7 @@
       defer
     ></script>
 
-    <script data-cfasync="false">
-      window.ramp = window.ramp || {};
-      window.ramp.que = window.ramp.que || [];
-      window.ramp.passiveMode = true;
-    </script>
-
-    <script>
-      window.googletag = window.googletag || { cmd: [] };
-      googletag.cmd.push(function () {
-        googletag.pubads().set("page_url", "http://openfront.io ");
-      });
-    </script>
-
     <!-- Analytics -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=AW-16702609763"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-
-      gtag("js", new Date());
-      gtag("config", "AW-16702609763");
-    </script>
     <!-- Google tag (gtag.js) -->
     <script
       async
@@ -441,12 +403,5 @@
       data-cf-beacon='{"token": "03d93e6fefb349c28ee69b408fa25a13"}'
     ></script>
     <script type="module" src="/src/client/Main.ts"></script>
-    <footer>
-      <script
-        data-cfasync="false"
-        async
-        src="//cdn.intergient.com/1025558/75940/ramp.js"
-      ></script>
-    </footer>
   </body>
 </html>

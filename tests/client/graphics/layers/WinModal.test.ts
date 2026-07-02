@@ -29,7 +29,6 @@ vi.mock("../../../../src/client/Cosmetics", () => ({
 vi.mock("../../../../src/client/CrazyGamesSDK", () => ({
   crazyGamesSDK: {
     happytime: vi.fn(),
-    requestAd: vi.fn(),
     gameplayStop: vi.fn(),
   },
 }));

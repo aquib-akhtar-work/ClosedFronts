@@ -142,7 +142,7 @@ describe("GameServer team-pin wire", () => {
     expect(parsed.success).toBe(true);
     if (!parsed.success) return;
 
-    const outcome = game.handleIntent(parsed.data.intent, {
+    const outcome = game.handleIntent((parsed.data as any).intent, {
       clientID: "host",
       isLobbyCreator: true,
       isAdmin: false,
@@ -207,7 +207,7 @@ describe("GameServer team-pin wire", () => {
     expect(parsed.success).toBe(true);
     if (!parsed.success) return;
     expect(
-      game.handleIntent(parsed.data.intent, {
+      game.handleIntent((parsed.data as any).intent, {
         clientID: "host",
         isLobbyCreator: true,
         isAdmin: false,

@@ -18,10 +18,12 @@ import type { GhostPreviewData, RendererConfig, UnitState } from "../../types";
 import {
   UT_CITY,
   UT_DEFENSE_POST,
+  UT_EMBASSY,
   UT_FACTORY,
   UT_MISSILE_SILO,
   UT_PORT,
   UT_SAM_LAUNCHER,
+  UT_SEASIDE_TOWN,
 } from "../../types";
 import { DynamicInstanceBuffer } from "../DynamicBuffer";
 import type { RenderSettings } from "../RenderSettings";
@@ -135,6 +137,18 @@ export class StructurePass {
       if (col >= 0) {
         this.typeToAtlasCol.set(header.unitTypes[i], col);
       }
+    }
+    // Placeholder art for new structures: the pre-built atlas only has 6
+    // columns, so reuse an existing column's sprite until dedicated embassy /
+    // seaside-town icons are added to generate-sprite-atlases.mjs. Embassy
+    // borrows the City sprite, Seaside Town borrows the Port sprite.
+    const cityCol = STRUCTURE_ORDER.indexOf(UT_CITY);
+    const portCol = STRUCTURE_ORDER.indexOf(UT_PORT);
+    if (!this.typeToAtlasCol.has(UT_EMBASSY) && cityCol >= 0) {
+      this.typeToAtlasCol.set(UT_EMBASSY, cityCol);
+    }
+    if (!this.typeToAtlasCol.has(UT_SEASIDE_TOWN) && portCol >= 0) {
+      this.typeToAtlasCol.set(UT_SEASIDE_TOWN, portCol);
     }
 
     // Compile shaders

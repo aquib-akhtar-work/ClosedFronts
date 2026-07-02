@@ -33,6 +33,7 @@ describe("TradeShipExecution", () => {
       id: vi.fn(() => 1),
       clientID: vi.fn(() => 1),
       canTrade: vi.fn(() => true),
+      hasEmbassyIn: vi.fn(() => false),
     } as any;
 
     dstOwner = {
@@ -43,6 +44,7 @@ describe("TradeShipExecution", () => {
       unitCount: vi.fn(() => 1),
       clientID: vi.fn(() => 2),
       canTrade: vi.fn(() => true),
+      hasEmbassyIn: vi.fn(() => false),
     } as any;
 
     pirate = {
@@ -52,6 +54,7 @@ describe("TradeShipExecution", () => {
       units: vi.fn(() => [piratePort, piratePort2]),
       unitCount: vi.fn(() => 2),
       canTrade: vi.fn(() => true),
+      hasEmbassyIn: vi.fn(() => false),
     } as any;
 
     piratePort = {
@@ -165,5 +168,29 @@ describe("TradeShipExecution", () => {
     expect(tradeShipExecution.isActive()).toBe(false);
     expect(origOwner.addGold).toHaveBeenCalled();
     expect(dstOwner.addGold).toHaveBeenCalled();
+  });
+
+  it("doubles the host's gold when the other party has an embassy in it", () => {
+    // srcOwner built an embassy in dstOwner's land → dstOwner is the host and
+    // earns +100% (2x gold). srcOwner earns the base amount.
+    origOwner.hasEmbassyIn = vi.fn(() => true);
+    dstOwner.hasEmbassyIn = vi.fn(() => false);
+    tradeShipExecution["pathFinder"] = {
+      next: vi.fn(() => ({ status: PathStatus.COMPLETE, node: 32 })),
+      findPath: vi.fn((from: number) => [from]),
+    } as any;
+    tradeShipExecution.tick(1);
+    // Base gold paid to src, doubled gold paid to dst (the host).
+    expect(origOwner.addGold).toHaveBeenCalledWith(
+      expect.any(BigInt),
+      srcPort.tile(),
+    );
+    expect(dstOwner.addGold).toHaveBeenCalledWith(
+      expect.any(BigInt),
+      dstPort.tile(),
+    );
+    const srcGold = (origOwner.addGold as any).mock.calls[0][0];
+    const dstGold = (dstOwner.addGold as any).mock.calls[0][0];
+    expect(dstGold).toBe(srcGold * 2n);
   });
 });

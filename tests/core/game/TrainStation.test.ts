@@ -54,6 +54,7 @@ describe("TrainStation", () => {
       isAlliedWith: vi.fn().mockReturnValue(false),
       isOnSameTeam: vi.fn().mockReturnValue(false),
       isFriendly: vi.fn().mockReturnValue(false),
+      hasEmbassyIn: vi.fn().mockReturnValue(false),
     } as any;
 
     unit = {
@@ -102,6 +103,7 @@ describe("TrainStation", () => {
       canTrade: vi.fn().mockReturnValue(true),
       isAlliedWith: vi.fn().mockReturnValue(false),
       isOnSameTeam: vi.fn().mockReturnValue(false),
+      hasEmbassyIn: vi.fn().mockReturnValue(false),
     } as any;
     const trainOwner = {
       addGold: vi.fn(),
@@ -109,6 +111,7 @@ describe("TrainStation", () => {
       canTrade: vi.fn().mockReturnValue(true),
       isAlliedWith: vi.fn().mockReturnValue(false),
       isOnSameTeam: vi.fn().mockReturnValue(false),
+      hasEmbassyIn: vi.fn().mockReturnValue(false),
     } as any;
 
     unit.type.mockReturnValue(UnitType.City);

@@ -193,6 +193,24 @@ describe("Stats", () => {
     });
   });
 
+  test("unitBuild embassy", () => {
+    stats.unitBuild(player1, UnitType.Embassy);
+    expect(stats.stats()).toStrictEqual({
+      client1: { units: { emb: [1n] } },
+    });
+  });
+
+  test("unitDestroy seaside town", () => {
+    stats.unitDestroy(player1, UnitType.SeasideTown);
+    expect(stats.stats()).toStrictEqual({
+      client1: {
+        units: {
+          sea: [0n, 1n],
+        },
+      },
+    });
+  });
+
   test("unitCapture", () => {
     stats.unitCapture(player1, UnitType.DefensePost);
     expect(stats.stats()).toStrictEqual({

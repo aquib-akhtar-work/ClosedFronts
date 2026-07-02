@@ -28,6 +28,7 @@ import { renderNumber } from "../../Utils";
 import { GameView } from "../../view";
 const warshipIcon = assetUrl("images/BattleshipIconWhite.svg");
 const cityIcon = assetUrl("images/CityIconWhite.svg");
+const embassyIcon = assetUrl("images/EmbassyIconWhite.svg");
 const factoryIcon = assetUrl("images/FactoryIconWhite.svg");
 const goldCoinIcon = assetUrl("images/GoldCoinIcon.svg");
 const mirvIcon = assetUrl("images/MIRVIcon.svg");
@@ -36,6 +37,7 @@ const hydrogenBombIcon = assetUrl("images/MushroomCloudIconWhite.svg");
 const atomBombIcon = assetUrl("images/NukeIconWhite.svg");
 const portIcon = assetUrl("images/PortIcon.svg");
 const samlauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
+const seasideTownIcon = assetUrl("images/SeasideTownIconWhite.svg");
 const shieldIcon = assetUrl("images/ShieldIconWhite.svg");
 
 export interface BuildItemDisplay {
@@ -116,6 +118,20 @@ export const buildTable: BuildItemDisplay[][] = [
       icon: factoryIcon,
       description: "build_menu.desc.factory",
       key: "unit_type.factory",
+      countable: true,
+    },
+    {
+      unitType: UnitType.Embassy,
+      icon: embassyIcon,
+      description: "build_menu.desc.embassy",
+      key: "unit_type.embassy",
+      countable: true,
+    },
+    {
+      unitType: UnitType.SeasideTown,
+      icon: seasideTownIcon,
+      description: "build_menu.desc.seaside_town",
+      key: "unit_type.seaside_town",
       countable: true,
     },
   ],

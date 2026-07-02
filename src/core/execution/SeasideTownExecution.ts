@@ -3,16 +3,26 @@ import { PseudoRandom } from "../PseudoRandom";
 import { TradeShipExecution } from "./TradeShipExecution";
 import { TrainStationExecution } from "./TrainStationExecution";
 
-export class PortExecution implements Execution {
+/**
+ * A Seaside Town is a coastal structure that combines a Port (spawns trade
+ * ships) with a half-strength City (contributes to max population — handled in
+ * `DefaultConfig.maxPopulation`). It is train-station-capable when a Factory is
+ * nearby, just like a Port.
+ *
+ * In v0.32.6 the structure unit is built by `ConstructionExecution`, which
+ * then constructs this execution with the already-built town `Unit`. Trade
+ * destinations include both Ports and other Seaside Towns.
+ */
+export class SeasideTownExecution implements Execution {
   private active = true;
   private mg: Game;
-  private port: Unit;
+  private town: Unit;
   private random: PseudoRandom;
   private checkOffset: number;
   private tradeShipSpawnRejections = 0;
 
-  constructor(port: Unit) {
-    this.port = port;
+  constructor(town: Unit) {
+    this.town = town;
   }
 
   init(mg: Game, ticks: number): void {
@@ -26,16 +36,16 @@ export class PortExecution implements Execution {
       throw new Error("Not initialized");
     }
 
-    if (!this.port.isActive()) {
+    if (!this.town.isActive()) {
       this.active = false;
       return;
     }
 
-    if (this.port.isUnderConstruction()) {
+    if (this.town.isUnderConstruction()) {
       return;
     }
 
-    if (!this.port.hasTrainStation()) {
+    if (!this.town.hasTrainStation()) {
       this.createStation();
     }
 
@@ -56,7 +66,7 @@ export class PortExecution implements Execution {
 
     const port = this.random.randElement(ports);
     this.mg.addExecution(
-      new TradeShipExecution(this.port.owner(), this.port, port),
+      new TradeShipExecution(this.town.owner(), this.town, port),
     );
   }
 
@@ -73,7 +83,7 @@ export class PortExecution implements Execution {
     const spawnRate = this.mg
       .config()
       .tradeShipSpawnRate(this.tradeShipSpawnRejections, numTradeShips);
-    for (let i = 0; i < this.port!.level(); i++) {
+    for (let i = 0; i < this.town!.level(); i++) {
       if (this.random.chance(spawnRate)) {
         this.tradeShipSpawnRejections = 0;
         return true;
@@ -85,27 +95,28 @@ export class PortExecution implements Execution {
 
   createStation(): void {
     const nearbyFactory = this.mg.hasUnitNearby(
-      this.port.tile()!,
+      this.town.tile()!,
       this.mg.config().trainStationMaxRange(),
       UnitType.Factory,
     );
     if (nearbyFactory) {
-      this.mg.addExecution(new TrainStationExecution(this.port));
+      this.mg.addExecution(new TrainStationExecution(this.town));
     }
   }
 
-  // It's a probability list, so if an element appears twice it's because it's
-  // twice more likely to be picked later.
+  // Trade destinations: tradeable players' Ports AND Seaside Towns reachable
+  // over water from this town. Mirrors `PortExecution.tradingPorts`, but the
+  // candidate set includes Seaside Towns so they trade with each other.
   tradingPorts(): Unit[] {
     const sourceComponents = new Set<number>();
-    for (const neighbor of this.mg.neighbors(this.port!.tile())) {
+    for (const neighbor of this.mg.neighbors(this.town!.tile())) {
       if (!this.mg.isWater(neighbor)) continue;
       const comp = this.mg.getWaterComponent(neighbor);
       if (comp !== null) sourceComponents.add(comp);
     }
     const ports = this.mg
       .players()
-      .filter((p) => p !== this.port!.owner() && p.canTrade(this.port!.owner()))
+      .filter((p) => p !== this.town!.owner() && p.canTrade(this.town!.owner()))
       .flatMap((p) => [
         ...p.units(UnitType.Port),
         ...p.units(UnitType.SeasideTown),
@@ -118,8 +129,8 @@ export class PortExecution implements Execution {
       })
       .sort((p1, p2) => {
         return (
-          this.mg.manhattanDist(this.port!.tile(), p1.tile()) -
-          this.mg.manhattanDist(this.port!.tile(), p2.tile())
+          this.mg.manhattanDist(this.town!.tile(), p1.tile()) -
+          this.mg.manhattanDist(this.town!.tile(), p2.tile())
         );
       });
 
@@ -129,16 +140,14 @@ export class PortExecution implements Execution {
       const expanded = new Array(otherPort.level()).fill(otherPort);
       weightedPorts.push(...expanded);
       const tooClose =
-        this.mg.manhattanDist(this.port!.tile(), otherPort.tile()) <
+        this.mg.manhattanDist(this.town!.tile(), otherPort.tile()) <
         this.mg.config().tradeShipShortRangeDebuff();
       const closeBonus =
         i < this.mg.config().proximityBonusPortsNb(ports.length);
       if (!tooClose && closeBonus) {
-        // If the port is close, but not too close, add it again
-        // to increase the chances of trading with it.
         weightedPorts.push(...expanded);
       }
-      if (!tooClose && this.port!.owner().isFriendly(otherPort.owner())) {
+      if (!tooClose && this.town!.owner().isFriendly(otherPort.owner())) {
         weightedPorts.push(...expanded);
       }
     }

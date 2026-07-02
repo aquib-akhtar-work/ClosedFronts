@@ -394,8 +394,17 @@ function getAllEnabledUnits(
 
   if (myPlayer) {
     Structures.types.forEach(addIfEnabled);
+    // Embassy is buildable but not a `Structures` member (it sits on foreign
+    // land); add it explicitly so it shows on the radial wheel. embassySpawn
+    // searches outward from the clicked tile for a nearby foreign tradeable
+    // tile, so a player near a border can start an embassy from their own land.
+    addIfEnabled(UnitType.Embassy);
   } else {
     BuildableAttacks.types.forEach(addIfEnabled);
+    // Clicking foreign territory: also offer Embassy so it can be placed
+    // directly on a foreign tradeable neighbor's land. The per-item
+    // `disabled` flag greys it out when not buildable.
+    addIfEnabled(UnitType.Embassy);
   }
 
   return units;

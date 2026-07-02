@@ -237,6 +237,18 @@ export class Config {
     return toInt(gold * this.goldMultiplierFor(player));
   }
 
+  embassyPassiveGold(level: number): Gold {
+    // Passive income an embassy pays to its owner (the builder), per interval.
+    return BigInt(10_000) * BigInt(level + 1);
+  }
+  embassyGoldInterval(): Tick {
+    return 10;
+  }
+  seasideTownPopulationFactor(): number {
+    // Seaside towns contribute this fraction of a city's max-population bonus.
+    return 0.5;
+  }
+
   trainStationMinRange(): number {
     return 15;
   }
@@ -396,6 +408,30 @@ export class Config {
               Math.min(1_000_000, Math.pow(2, numUnits) * 125_000),
             UnitType.Factory,
             UnitType.Port,
+          ),
+          constructionDuration: this.instantBuild() ? 0 : 2 * 10,
+          upgradable: true,
+        };
+        break;
+      case UnitType.Embassy:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) =>
+              Math.min(1_000_000, Math.pow(2, numUnits) * 125_000),
+            UnitType.Embassy,
+          ),
+          // Instant (no construction phase): the embassy sits on foreign land,
+          // so we avoid any under-construction window. It is also excluded
+          // from the `Structures` set so the host cannot capture it.
+          upgradable: true,
+        };
+        break;
+      case UnitType.SeasideTown:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) =>
+              Math.min(1_000_000, Math.pow(2, numUnits) * 125_000),
+            UnitType.SeasideTown,
           ),
           constructionDuration: this.instantBuild() ? 0 : 2 * 10,
           upgradable: true,
@@ -751,15 +787,22 @@ export class Config {
   }
 
   maxTroops(player: Player | PlayerView): number {
+    const cityLevels = player
+      .units(UnitType.City)
+      .filter((u) => !u.isUnderConstruction())
+      .map((city) => city.level())
+      .reduce((a, b) => a + b, 0);
+    // Seaside towns act as half-strength cities for max population/troops.
+    const seasideLevels = player
+      .units(UnitType.SeasideTown)
+      .filter((u) => !u.isUnderConstruction())
+      .map((town) => town.level())
+      .reduce((a, b) => a + b, 0);
     const maxTroops =
       player.type() === PlayerType.Human && this.hasInfiniteTroopsFor(player)
         ? 1_000_000_000
         : 2 * (Math.pow(player.numTilesOwned(), 0.6) * 1000 + 50000) +
-          player
-            .units(UnitType.City)
-            .filter((u) => !u.isUnderConstruction())
-            .map((city) => city.level())
-            .reduce((a, b) => a + b, 0) *
+          (cityLevels + seasideLevels * this.seasideTownPopulationFactor()) *
             this.cityTroopIncrease();
 
     if (player.type() === PlayerType.Bot) {

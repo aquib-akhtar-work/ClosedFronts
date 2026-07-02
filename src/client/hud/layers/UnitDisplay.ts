@@ -17,6 +17,7 @@ import { renderNumber, translateText } from "../../Utils";
 import { GameView } from "../../view";
 const warshipIcon = assetUrl("images/BattleshipIconWhite.svg");
 const cityIcon = assetUrl("images/CityIconWhite.svg");
+const embassyIcon = assetUrl("images/EmbassyIconWhite.svg");
 const factoryIcon = assetUrl("images/FactoryIconWhite.svg");
 const goldCoinIcon = assetUrl("images/GoldCoinIcon.svg");
 const mirvIcon = assetUrl("images/MIRVIcon.svg");
@@ -26,6 +27,7 @@ const atomBombIcon = assetUrl("images/NukeIconWhite.svg");
 const portIcon = assetUrl("images/PortIcon.svg");
 const samLauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
 const defensePostIcon = assetUrl("images/ShieldIconWhite.svg");
+const seasideTownIcon = assetUrl("images/SeasideTownIconWhite.svg");
 
 @customElement("unit-display")
 export class UnitDisplay extends LitElement implements Controller {
@@ -36,6 +38,8 @@ export class UnitDisplay extends LitElement implements Controller {
   private keybinds: Record<string, { value: string; key: string }> = {};
   private _cities = 0;
   private _warships = 0;
+  private _embassy = 0;
+  private _seasideTown = 0;
   private _factories = 0;
   private _missileSilo = 0;
   private _port = 0;
@@ -101,6 +105,8 @@ export class UnitDisplay extends LitElement implements Controller {
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
+    this._embassy = player.totalUnitLevels(UnitType.Embassy);
+    this._seasideTown = player.totalUnitLevels(UnitType.SeasideTown);
     this.requestUpdate();
   }
 
@@ -192,6 +198,20 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.MIRV,
             "mirv",
             this.keybinds["buildMIRV"]?.key ?? "0",
+          )}
+          ${this.renderUnitItem(
+            embassyIcon,
+            this._embassy,
+            UnitType.Embassy,
+            "embassy",
+            this.keybinds["buildEmbassy"]?.key ?? "Shift+Digit1",
+          )}
+          ${this.renderUnitItem(
+            seasideTownIcon,
+            this._seasideTown,
+            UnitType.SeasideTown,
+            "seaside_town",
+            this.keybinds["buildSeasideTown"]?.key ?? "Shift+Digit2",
           )}
         </div>
       </div>

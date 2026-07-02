@@ -197,8 +197,16 @@ export class TradeShipExecution implements Execution {
         .stats()
         .boatCapturedTrade(this.tradeShip!.owner(), this.origOwner, gold);
     } else {
-      this.srcPort.owner().addGold(gold, this.srcPort.tile());
-      this._dstPort.owner().addGold(gold, this._dstPort.tile());
+      // Embassy trade bonus: the host nation (the one in whose territory the
+      // other party built an Embassy) earns +100% on this trade. Mutual
+      // embassies double both sides.
+      const srcOwner = this.srcPort.owner();
+      const dstOwner = this._dstPort.owner();
+      const srcGold = gold * BigInt(dstOwner.hasEmbassyIn(srcOwner) ? 2 : 1);
+      const dstGold = gold * BigInt(srcOwner.hasEmbassyIn(dstOwner) ? 2 : 1);
+
+      srcOwner.addGold(srcGold, this.srcPort.tile());
+      dstOwner.addGold(dstGold, this._dstPort.tile());
       // Record stats
       this.mg
         .stats()

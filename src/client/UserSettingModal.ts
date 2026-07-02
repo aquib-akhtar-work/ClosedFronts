@@ -502,6 +502,26 @@ export class UserSettingModal extends BaseModal {
         @change=${this.handleKeybindChange}
       ></setting-keybind>
 
+      <setting-keybind
+        action="buildEmbassy"
+        label=${translateText("user_setting.build_embassy")}
+        description=${translateText("user_setting.build_embassy_desc")}
+        defaultKey=${this.defaultKeybinds.buildEmbassy}
+        .value=${this.getKeyValue("buildEmbassy")}
+        .display=${this.getKeyChar("buildEmbassy")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
+        action="buildSeasideTown"
+        label=${translateText("user_setting.build_seaside_town")}
+        description=${translateText("user_setting.build_seaside_town_desc")}
+        defaultKey=${this.defaultKeybinds.buildSeasideTown}
+        .value=${this.getKeyValue("buildSeasideTown")}
+        .display=${this.getKeyChar("buildSeasideTown")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
       <h2
         class="text-blue-200 text-xl font-bold mt-8 mb-3 border-b border-white/10 pb-2"
       >

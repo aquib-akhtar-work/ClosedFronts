@@ -179,6 +179,8 @@ export enum UnitType {
   MIRVWarhead = "MIRV Warhead",
   Train = "Train",
   Factory = "Factory",
+  Embassy = "Embassy",
+  SeasideTown = "Seaside Town",
 }
 
 export enum TrainType {
@@ -208,10 +210,16 @@ export const Structures = unitTypeGroup([
   UnitType.MissileSilo,
   UnitType.Port,
   UnitType.Factory,
+  UnitType.SeasideTown,
 ] as const);
 
+// Embassy is buildable but deliberately NOT a `Structures` member: it sits on
+// foreign, tradeable territory, and `PlayerExecution` would otherwise hand it
+// to the tile owner (the host) the instant it is built. Excluding it keeps it
+// with its builder until the builder is eliminated.
 export const BuildMenus = unitTypeGroup([
   ...Structures.types,
+  UnitType.Embassy,
   ...BuildableAttacks.types,
 ] as const);
 
@@ -276,6 +284,10 @@ export interface UnitParamsMap {
   [UnitType.SAMLauncher]: Record<string, never>;
 
   [UnitType.City]: Record<string, never>;
+
+  [UnitType.Embassy]: Record<string, never>;
+
+  [UnitType.SeasideTown]: Record<string, never>;
 
   [UnitType.MIRV]: {
     targetTile?: number;
@@ -648,6 +660,8 @@ export interface Player {
   stopEmbargo(other: Player): void;
   endTemporaryEmbargo(other: Player): void;
   canTrade(other: Player): boolean;
+  hasEmbassyIn(host: Player): boolean;
+  tradePortCount(): number;
 
   // Attacking.
   canAttack(tile: TileRef): boolean;

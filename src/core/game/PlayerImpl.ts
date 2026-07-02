@@ -1359,6 +1359,10 @@ export class PlayerImpl implements Player {
         return targetTile;
       case UnitType.Port:
         return this.portSpawn(targetTile, validTiles);
+      case UnitType.SeasideTown:
+        return this.portSpawn(targetTile, validTiles);
+      case UnitType.Embassy:
+        return this.embassySpawn(targetTile);
       case UnitType.Warship:
         return this.warshipSpawn(targetTile);
       case UnitType.Shell:
@@ -1521,6 +1525,79 @@ export class PlayerImpl implements Player {
         this.mg.euclideanDistSquared(b, tile),
     );
     return valid;
+  }
+
+  /**
+   * Find a tile on a foreign, tradeable player's territory near `tile` where an
+   * Embassy can be placed. Unlike land-based structures, embassies are built on
+   * another player's land, so this bypasses the `owner === this` rule in
+   * `validStructureSpawnTiles`. Existing structures still get a min-distance
+   * buffer so the embassy doesn't stack on top of them.
+   */
+  embassySpawn(tile: TileRef): TileRef | false {
+    const searchRadius = 15;
+    const searchRadiusSquared = searchRadius ** 2;
+    const nearbyUnits = this.mg.nearbyUnits(
+      tile,
+      searchRadius * 2,
+      Structures.types,
+      undefined,
+      true,
+    );
+    const candidates = Array.from(
+      this.mg.bfs(
+        tile,
+        (gm, t) => this.mg.euclideanDistSquared(tile, t) < searchRadiusSquared,
+      ),
+    );
+    const minDistSquared = this.mg.config().structureMinDist() ** 2;
+
+    const valid: TileRef[] = [];
+    for (const t of candidates) {
+      const owner = this.mg.owner(t);
+      // Must be a foreign player we can trade with (not own land, not nullius).
+      if (!owner.isPlayer() || owner === this) {
+        continue;
+      }
+      if (!this.canTrade(owner)) {
+        continue;
+      }
+      let tooClose = false;
+      for (const { unit } of nearbyUnits) {
+        if (this.mg.euclideanDistSquared(unit.tile(), t) < minDistSquared) {
+          tooClose = true;
+          break;
+        }
+      }
+      if (!tooClose) {
+        valid.push(t);
+      }
+    }
+    valid.sort(
+      (a, b) =>
+        this.mg.euclideanDistSquared(a, tile) -
+        this.mg.euclideanDistSquared(b, tile),
+    );
+    return valid.length > 0 ? valid[0] : false;
+  }
+
+  /**
+   * True if this player owns an Embassy built on `host`'s territory — i.e. this
+   * player is the "builder" of an embassy in `host`'s nation. Drives the +100%
+   * trade bonus the host receives on ships/trains with this player.
+   */
+  hasEmbassyIn(host: Player): boolean {
+    return this.units(UnitType.Embassy).some(
+      (e) => this.mg.owner(e.tile()) === host,
+    );
+  }
+
+  /**
+   * Total number of port-capable structures (Ports + Seaside Towns) owned by
+   * this player. Used for trade-ship gold scaling.
+   */
+  tradePortCount(): number {
+    return this.unitCount(UnitType.Port) + this.unitCount(UnitType.SeasideTown);
   }
 
   tradeShipSpawn(targetTile: TileRef): TileRef | false {

@@ -2,12 +2,14 @@ import { Execution, Game, Player, Tick, Unit, UnitType } from "../game/Game";
 import { TileRef } from "../game/GameMap";
 import { CityExecution } from "./CityExecution";
 import { DefensePostExecution } from "./DefensePostExecution";
+import { EmbassyExecution } from "./EmbassyExecution";
 import { FactoryExecution } from "./FactoryExecution";
 import { MirvExecution } from "./MIRVExecution";
 import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
 import { PortExecution } from "./PortExecution";
 import { SAMLauncherExecution } from "./SAMLauncherExecution";
+import { SeasideTownExecution } from "./SeasideTownExecution";
 import { WarshipExecution } from "./WarshipExecution";
 
 export class ConstructionExecution implements Execution {
@@ -127,6 +129,12 @@ export class ConstructionExecution implements Execution {
       case UnitType.Port:
         this.mg.addExecution(new PortExecution(this.structure!));
         break;
+      case UnitType.Embassy:
+        this.mg.addExecution(new EmbassyExecution(this.structure!));
+        break;
+      case UnitType.SeasideTown:
+        this.mg.addExecution(new SeasideTownExecution(this.structure!));
+        break;
       case UnitType.MissileSilo:
         this.mg.addExecution(new MissileSiloExecution(this.structure!));
         break;
@@ -160,6 +168,8 @@ export class ConstructionExecution implements Execution {
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
+      case UnitType.Embassy:
+      case UnitType.SeasideTown:
         return true;
       default:
         return false;

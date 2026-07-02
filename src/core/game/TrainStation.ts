@@ -31,6 +31,13 @@ class TradeStationStopHandler implements TrainStopHandler {
     if (trainOwner !== stationOwner) {
       stationOwner.addGold(gold, station.tile());
       mg.stats().trainExternalTrade(stationOwner, gold);
+      // Embassy trade bonus: the station owner is the "host" nation. If the
+      // train's owner built an embassy in the host's territory, the host earns
+      // +100% on this stop (the same gold bonus is paid again). An embassy can
+      // never be built on own land, so this is a no-op when owners match.
+      if (trainOwner.hasEmbassyIn(stationOwner)) {
+        stationOwner.addGold(gold, station.tile());
+      }
     }
     trainOwner.addGold(gold, station.tile());
     mg.stats().trainSelfTrade(trainOwner, gold);
@@ -51,6 +58,7 @@ export function createTrainStopHandlers(
   return {
     [UnitType.City]: new TradeStationStopHandler(),
     [UnitType.Port]: new TradeStationStopHandler(),
+    [UnitType.SeasideTown]: new TradeStationStopHandler(),
     [UnitType.Factory]: new FactoryStopHandler(),
   };
 }
@@ -164,7 +172,11 @@ export class Cluster {
 
   private isTradeStation(station: TrainStation): boolean {
     const type = station.unit.type();
-    return type === UnitType.City || type === UnitType.Port;
+    return (
+      type === UnitType.City ||
+      type === UnitType.Port ||
+      type === UnitType.SeasideTown
+    );
   }
 
   has(station: TrainStation) {
